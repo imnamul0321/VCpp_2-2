@@ -10,7 +10,7 @@ POINT startPoint = { 0 };
 POINT endPoint = { 0 };
 int isKeyPressed = 0;
 
-RECT rect_user = { 5, 5, 10, 10 }; // 왼쪽 상단 좌표 (50, 50)에서 오른쪽 하단 좌표 (150, 150)까지의 사각형
+RECT rect_user = { 5, 5, 10, 10 }; // 왼쪽 상단 좌표 (5, 5)에서 오른쪽 하단 좌표 (10, 10)까지의 사각형
 RECT rect_target = { 50, 50, 150, 150 }; // 왼쪽 상단 좌표 (50, 50)에서 오른쪽 하단 좌표 (150, 150)까지의 사각형
 
 // 윈도우의 이벤트를 처리하는 콜백(Callback) 함수.
@@ -27,27 +27,51 @@ LRESULT CALLBACK WindowProc(HWND hwnd, UINT uMsg, WPARAM wParam, LPARAM lParam)
 	{
 	case WM_KEYDOWN:
 		isKeyPressed = 1;
-		if (wParam == VK_RIGHT)
+		if (wParam == VK_RIGHT) //오른쪽 키
 		{
-			rect_user.left += 5;
-			rect_user.right += 5;
+			rect_user.left += 1;
+			rect_user.right += 1;
 			InvalidateRect(hwnd, NULL, TRUE);
 		}
+		if (wParam == VK_LEFT) //왼쪽 키
+		{
+			rect_user.left -= 1;
+			rect_user.right -= 1;
+			InvalidateRect(hwnd, NULL, TRUE);
+		}
+		if (wParam == VK_UP) // 위쪽 키
+		{
+			rect_user.top -= 1;
+			rect_user.bottom -= 1;
+			InvalidateRect(hwnd, NULL, TRUE);
+		}
+		if (wParam == VK_DOWN) // 아래 키
+		{	
+
+			rect_user.top += 1;
+			rect_user.bottom += 1;
+			InvalidateRect(hwnd, NULL, TRUE);
+		}
+
+
 		break;
 	case WM_KEYUP:
 		isKeyPressed = 0;
 		break;
 	case WM_PAINT:
 	{
+		//핑크 사각형에 있는지 확인 +어쩌다보니 밖을 계산함
+		if (rect_user.right <= rect_target.left || rect_user.left >= rect_target.right ||
+			rect_user.bottom <= rect_target.top || rect_user.top >= rect_target.bottom) {
+			
+		}
+		else { //없으면 충돌 한거라 크래시 출력
+			TextOut(hdc, 10, 10, text, lstrlen(text));
+		}
+
 		if (isKeyPressed)
 		{
 			FillRect(hdc, &rect_user, hBrush_user);
-			FillRect(hdc, &rect_target, hBrush_target);
-		}
-		else
-		{
-			TextOut(hdc, 10, 10, text, lstrlen(text));
-			FillRect(hdc, &rect_user, hBrush_eraser);
 			FillRect(hdc, &rect_target, hBrush_target);
 		}
 
@@ -105,7 +129,7 @@ int WINAPI WinMain(_In_ HINSTANCE hInstance, _In_opt_ HINSTANCE hPrevInstance, _
 	// 윈도우 생성
 	HWND hwnd = CreateWindow(
 		wc.lpszClassName,
-		TEXT("컴소 Application"),
+		TEXT("202207010 임성진"),
 		WS_OVERLAPPEDWINDOW,
 		0, 0,
 		width, height,
