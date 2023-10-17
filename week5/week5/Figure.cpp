@@ -94,7 +94,7 @@ LRESULT CALLBACK WindowProc(HWND hwnd, UINT uMsg, WPARAM wParam, LPARAM lParam)
 				LstartPoint.y += result_y;
 				LendPoint.x += result_x;
 				LendPoint.y += result_y;
-
+				//다시 초기화 안해주면 처음값 다시받아서 움직일수록 더멀리감
 				RstartPoint.x = RendPoint.x;
 				RstartPoint.y = RendPoint.y;
 
