@@ -5,20 +5,32 @@
 //#endif
 
 #include <windows.h>
+#include <iostream>
+//시작, 끝 점 왼
+POINT LstartPoint = { 0 };
+POINT LendPoint = { 0 };
+//시작, 끝 점 오
+POINT RstartPoint = { 0 };
+POINT RendPoint = { 0 };
 
-POINT startPoint = { 0 };
-POINT endPoint = { 0 };
+////마우스 커서 위치 받는 함수  bool형식임 long
+//void GetMouseCursorPosition(HWND hwnd, int* x, int* y)
+//{
+//	POINT cursorPos;
+//	//GetCursorPos(&cursorPos);	//화면 상의 위치
+//	ScreenToClient(hwnd, &cursorPos);	//클라이언트 영역의 좌표
+//	const int x = cursorPos.x;
+//	const int y = cursorPos.y;
+//}
 
+
+//버튼 초기화
+//L
 int isMouseLButtonPressed = 0;
+//R
+int isMouseRButtonPressed = 0;
 
 
-RECT selectedRect = { 0 };
-
-long xStart = 0;
-long yStart = 0;
-
-long xEnd = 0;
-long yEnd = 0;
 
 LRESULT CALLBACK WindowProc(HWND hwnd, UINT uMsg, WPARAM wParam, LPARAM lParam)
 {
@@ -26,23 +38,99 @@ LRESULT CALLBACK WindowProc(HWND hwnd, UINT uMsg, WPARAM wParam, LPARAM lParam)
 
 	switch (uMsg)
 	{
+
+	case WM_GETMINMAXINFO: //창 크기 고정
+	{
+		MINMAXINFO* lpMMI = (MINMAXINFO*)lParam;
+		lpMMI->ptMinTrackSize.x = 800;
+		lpMMI->ptMinTrackSize.y = 600;
+		lpMMI->ptMaxTrackSize.x = 800;
+		lpMMI->ptMaxTrackSize.y = 600;
+	}
+	break;
+
+	//왼클릭
 	case WM_LBUTTONDOWN:
 	{
-		xStart = LOWORD(lParam);
-		yStart = HIWORD(lParam);
+		LstartPoint.x = LOWORD(lParam);
+		LstartPoint.y = HIWORD(lParam);
 		isMouseLButtonPressed = 1;
+	}
+	break;
+
+	//우클릭
+	case WM_RBUTTONDOWN:
+	{
+		RstartPoint.x = LOWORD(lParam);
+		RstartPoint.y = HIWORD(lParam);
+
+		isMouseRButtonPressed = 1;
 	}
 	break;
 
 	case WM_MOUSEMOVE:
 	{
+
+		//R 커서 움직인만큼 더해주기
+		if (isMouseRButtonPressed) {
+			
+			RendPoint.x = LOWORD(lParam);
+			RendPoint.y = HIWORD(lParam);
+
+			//마우스 좌표가 사각형안에있을때 실행
+			if (RstartPoint.x >= LstartPoint.x && RendPoint.x <= LendPoint.x && RstartPoint.y >= LstartPoint.y && RendPoint.x <= LendPoint.y)
+			{
+				
+				int result_x = 0;
+				int result_y = 0;
+
+				//움직인 거리 구하기
+				// 
+				//계산
+				result_x = RendPoint.x - RstartPoint.x;
+				result_y = RendPoint.y - RstartPoint.y;
+
+				LstartPoint.x += result_x;
+				LstartPoint.y += result_y;
+				LendPoint.x += result_x;
+				LendPoint.y += result_y;
+
+				RstartPoint.x = RendPoint.x;
+				RstartPoint.y = RendPoint.y;
+
+
+
+
+				HDC hdc = GetDC(hwnd);
+				RECT rect = { LstartPoint.x, LstartPoint.y, LendPoint.x, LendPoint.y };
+				HBRUSH hBrush = CreateSolidBrush(RGB(255, 0, 255));
+
+				if (hBrush == NULL)
+				{
+					MessageBox(NULL, L"CreateSolidBrush failed!", L"Error", MB_ICONERROR);
+					exit(-1);
+				}
+
+				// 이전 사각형을 클리어하고 현재 사각형만을 그림
+				FillRect(hdc, &prevRect, (HBRUSH)GetStockObject(WHITE_BRUSH));
+				FillRect(hdc, &rect, hBrush);
+
+				ReleaseDC(hwnd, hdc);
+
+				// 현재 사각형을 이전 사각형으로 저장
+				prevRect = rect;
+			}
+		}
+
+			//L
 		if (isMouseLButtonPressed)
 		{
-			endPoint.x = LOWORD(lParam);
-			endPoint.y = HIWORD(lParam);
+			
+			LendPoint.x = LOWORD(lParam);
+			LendPoint.y = HIWORD(lParam);
 
 			HDC hdc = GetDC(hwnd);
-			RECT rect = { xStart, yStart, endPoint.x, endPoint.y };
+			RECT rect = { LstartPoint.x, LstartPoint.y, LendPoint.x, LendPoint.y };
 			HBRUSH hBrush = CreateSolidBrush(RGB(255, 0, 255));
 
 			if (hBrush == NULL)
@@ -62,12 +150,19 @@ LRESULT CALLBACK WindowProc(HWND hwnd, UINT uMsg, WPARAM wParam, LPARAM lParam)
 		}
 	}
 	break;
-
+	//좌클릭 땔때
 	case WM_LBUTTONUP:
 	{
 		isMouseLButtonPressed = 0;
-		xEnd = LOWORD(lParam);
-		yEnd = HIWORD(lParam);
+		//LendPoint.x = LOWORD(lParam);
+		//LendPoint.y = HIWORD(lParam);
+
+	}
+	break;
+	//우클릭 땔때
+	case WM_RBUTTONUP: //블럭 다시 그리기
+	{
+		isMouseRButtonPressed = 0;
 	}
 	break;
 
@@ -86,17 +181,7 @@ LRESULT CALLBACK WindowProc(HWND hwnd, UINT uMsg, WPARAM wParam, LPARAM lParam)
 	}
 	break;
 
-	case WM_RBUTTONDOWN:
-	{
-
-		
-	}
-
-	case WM_RBUTTONUP:
-	{
-		
-	}
-	break;
+	
 
 	case WM_DESTROY:
 		PostQuitMessage(0);
