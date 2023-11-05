@@ -13,6 +13,7 @@ int isCubeButtonPressed = 0; // 큐브 버튼 눌렸는지 확인
 
 int spacebarPressed = 0; //스페이스바 눌렸는지
 
+
 //기본브러쉬
 // 검정
 HBRUSH hBrush_Black = CreateSolidBrush(RGB(0, 0, 0));
@@ -209,7 +210,7 @@ LRESULT CALLBACK WindowProc(HWND hwnd, UINT uMsg, WPARAM wParam, LPARAM lParam)
         }
 
         break;
-        //보노보노 스페이스바 기능 누를때
+        //보노보노 스페이스바 기능 누를 때
     case WM_KEYDOWN:
     {
         //isBonobonoButtonPressed == 1 그냥 스페이스바 누르면 그려지는 거 방지
