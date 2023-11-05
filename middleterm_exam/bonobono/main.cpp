@@ -2,52 +2,237 @@
 
 HWND hArea1, hArea2, hButton1, hButton2, hButton3, hButton4, hButton5;
 
-POINT startPoint = { 0 };
-POINT endPoint = { 0 };
+//POINT startPoint = { 0 }; //왼클릭 사각형
+//POINT endPoint = { 0 }; //왼클릭 사각형
 
-bool bobono_paint = false;
+int isBoxButtonPressed = 0; // 박스 버튼 눌렸는지 확인
+int isCircleButtonPressed = 0; // 원 버튼 눌렸는지 확인
+int isBonobonoButtonPressed = 0; // 보노보노 버튼 눌렸는지 확인
+int isRyanButtonPressed = 0; // 라이언 버튼 눌렸는지 확인
+int isCubeButtonPressed = 0; // 큐브 버튼 눌렸는지 확인
+
+int spacebarPressed = 0; //스페이스바 눌렸는지
+
+//기본브러쉬
+// 검정
+HBRUSH hBrush_Black = CreateSolidBrush(RGB(0, 0, 0));
+// 흰색
+HBRUSH hBrush_White = CreateSolidBrush(RGB(255, 255, 255));
+
+//보노보노용 브러쉬 파랑, 핑크
+HBRUSH hBrush_BNFace = CreateSolidBrush(RGB(127, 200, 255));
+HBRUSH hBrush_BNTung = CreateSolidBrush(RGB(255, 150, 255));
+
+//보노보노 눈감은거 그리기
+void SpacebarBonobono(HWND hwnd, HDC hdc) {
+    
+    //파랑색
+    SelectObject(hdc, hBrush_BNFace);
+    Ellipse(hdc, 200, 100, 550, 450); //얼굴 
+
+    //핑크색
+    SelectObject(hdc, hBrush_BNTung);
+    Ellipse(hdc, 354, 250, 404, 350);
+
+    //검정
+    SelectObject(hdc, hBrush_Black);
+
+    //흰색
+    SelectObject(hdc, hBrush_White);
+
+    Ellipse(hdc, 380, 260, 440, 310); //입쪽 왼
+    Ellipse(hdc, 320, 260, 380, 310); //입쪽 오
+
+    //검정
+    SelectObject(hdc, hBrush_Black);
+    MoveToEx(hdc, 245, 220, NULL); //보노보노 눈 왼
+    LineTo(hdc, 260, 230);
+    MoveToEx(hdc, 245, 240, NULL);
+    LineTo(hdc, 260, 230);
+
+    MoveToEx(hdc, 500, 240, NULL); //보노보노 눈 오
+    LineTo(hdc, 485, 230);
+    MoveToEx(hdc, 500, 220, NULL);
+    LineTo(hdc, 485, 230);
+
+    MoveToEx(hdc, 335, 275, NULL); //수염 왼 위
+    LineTo(hdc, 285, 255);
+    MoveToEx(hdc, 300, 305, NULL); // 수염 왼 아
+    LineTo(hdc, 340, 295);
+
+    MoveToEx(hdc, 425, 275, NULL); //수염 오 위
+    LineTo(hdc, 455, 260);
+    MoveToEx(hdc, 420, 295, NULL); //수염 오 아 
+    LineTo(hdc, 470, 300);
+
+    //코
+    Ellipse(hdc, 354, 243, 404, 293);
+
+
+    //DeleteObject(hBrush_White);
+    //DeleteObject(hBrush_Black);
+    //DeleteObject(hBrush_BNTung); 
+    //DeleteObject(hBrush_BNFace); 
+    // 웬지 모르겠는데 자꾸 색 지워짐
+    // 안지우면 메모리 누수 가능성있음
+    // 마지막에 삭제해주기
+    
+
+    ReleaseDC(hwnd, hdc); // 삭제
+}
+//보노보노 그리기
+void DrawBonobono(HWND hwnd, HDC hdc) {
+
+    //파랑색
+    SelectObject(hdc, hBrush_BNFace);
+    Ellipse(hdc, 200, 100, 550, 450); //얼굴 
+
+    //핑크색
+    SelectObject(hdc, hBrush_BNTung);
+    Ellipse(hdc, 354, 250, 404, 350);
+
+    //검정
+    SelectObject(hdc, hBrush_Black);
+
+    Ellipse(hdc, 245, 215, 260, 235); // 눈 왼 검은자
+    Ellipse(hdc, 485, 215, 500, 235); // 눈 오 검은자
+
+    //흰색
+    SelectObject(hdc, hBrush_White); 
+
+    //Ellipse(  hdc Left Top  Right  Bottom)
+    Ellipse(hdc, 250, 220, 255, 226); // 눈 왼 흰자
+    Ellipse(hdc, 490, 220, 495, 226); // 눈 오 흰자
+
+    Ellipse(hdc, 380, 260, 440, 310); //입쪽 왼
+    Ellipse(hdc, 320, 260, 380, 310); //입쪽 오
+    
+
+    //검정
+    SelectObject(hdc, hBrush_Black);
+
+    MoveToEx(hdc, 335, 275, NULL); //수염 왼 위
+    LineTo(hdc, 285, 255);
+    MoveToEx(hdc, 300, 305, NULL); // 수염 왼 아
+    LineTo(hdc, 340, 295);
+
+    MoveToEx(hdc, 425, 275, NULL); //수염 오 위
+    LineTo(hdc, 455, 260);
+    MoveToEx(hdc, 420, 295, NULL); //수염 오 아 
+    LineTo(hdc, 470, 300);
+
+    //코
+    Ellipse(hdc, 354, 243, 404, 293);
+
+    
+    //DeleteObject(hBrush_White);
+    //DeleteObject(hBrush_Black);
+    //DeleteObject(hBrush_BNTung); 
+    //DeleteObject(hBrush_BNFace); 
+    // 웬지 모르겠는데 자꾸 색 지워짐
+    // 안지우면 메모리 누수 가능성있음
+    // 마지막에 삭제해주기
+    
+
+    ReleaseDC(hwnd, hdc); // 삭제
+
+}
 
 // 윈도우의 이벤트를 처리하는 콜백(Callback) 함수.
 LRESULT CALLBACK WindowProc(HWND hwnd, UINT uMsg, WPARAM wParam, LPARAM lParam)
 {
     HDC hdc = GetDC(hwnd);
 
-    //기본브러쉬
-    // 검정
-    HBRUSH hBrush_Black = CreateSolidBrush(RGB(0, 0, 0));
-    // 흰색
-    HBRUSH hBrush_White = CreateSolidBrush(RGB(255, 255, 255));
-    //보노보노 브러쉬
-    HBRUSH hBrush_BNFace = CreateSolidBrush(RGB(91, 155, 213));
-    HBRUSH hBrush_BNTung = CreateSolidBrush(RGB(251, 150, 251));
-
-
-
     switch (uMsg)
     {
+    case WM_COMMAND:
+        //버튼 기능부여 //지우는거 아직안함
+        switch (LOWORD(wParam)) 
+        {
+            
+        case 1: //박스버튼
+            isBoxButtonPressed = 1;
+            isCircleButtonPressed = 0; 
+            isBonobonoButtonPressed = 0;
+            isRyanButtonPressed = 0; 
+            isCubeButtonPressed = 0; 
+
+            SetFocus(hwnd); //포커스 해제
+            InvalidateRect(hwnd, NULL, TRUE); //이전에 그렸던거 삭제
+
+            break;
+        case 2: //원버튼
+            isBoxButtonPressed = 0;
+            isCircleButtonPressed = 1;
+            isBonobonoButtonPressed = 0;
+            isRyanButtonPressed = 0;
+            isCubeButtonPressed = 0;
+
+            SetFocus(hwnd); //포커스 해제
+            //InvalidateRect(hwnd, NULL, TRUE);
+
+            break;
+        case 3: //보노보노버튼
+            isBoxButtonPressed = 0;
+            isCircleButtonPressed = 0;
+            isBonobonoButtonPressed = 1;
+            isRyanButtonPressed = 0;
+            isCubeButtonPressed = 0;
+            
+            DrawBonobono(hwnd, hdc);
+            SetFocus(hwnd); //포커스 해제
+            //InvalidateRect(hwnd, NULL, TRUE);
+
+            break;
+        case 4: //라이언버튼
+            isBoxButtonPressed = 0;
+            isCircleButtonPressed = 0;
+            isBonobonoButtonPressed = 0;
+            isRyanButtonPressed = 1;
+            isCubeButtonPressed = 0;
+
+            SetFocus(hwnd); //포커스 해제
+            //InvalidateRect(hwnd, NULL, TRUE);
+
+            break;
+        case 5: //큐브버튼
+            isBoxButtonPressed = 0;
+            isCircleButtonPressed = 0;
+            isBonobonoButtonPressed = 0;
+            isRyanButtonPressed = 0;
+            isCubeButtonPressed = 1;
+
+            SetFocus(hwnd); //포커스 해제
+            //InvalidateRect(hwnd, NULL, TRUE);
+
+            break;
+        }
+
+        break;
+        //보노보노 스페이스바 기능 누를때
+    case WM_KEYDOWN:
+    {
+        //isBonobonoButtonPressed == 1 그냥 스페이스바 누르면 그려지는 거 방지
+        if (wParam == VK_SPACE && isBonobonoButtonPressed == 1) { //스페이스바를 누르면 눈감게
+            SpacebarBonobono(hwnd, hdc);
+        }
+    }
+    break;
+    //보노보노 스페이스바 기능 땔 때
+    case WM_KEYUP:
+    {
+        if (wParam == VK_SPACE && isBonobonoButtonPressed == 1) { //스페이스바를 땠을 때 눈뜨게
+            DrawBonobono(hwnd, hdc);
+        }
+    }
     case WM_MOUSEMOVE:
+        //그리기 영역 판별
         //if hArea2 영역(16, 90, 788, 400)에 마우스가 있으면
         //wc.hCursor = LoadCursor(NULL, IDC_ARROW); ->IDC_CROSS 아마도
 
         break;
-
     case WM_PAINT:
     {
-        //보노보노 그리기
-        //검정
-        SelectObject(hdc, hBrush_Black);
-
-        //코
-        Ellipse(hdc, 270, 170, 290, 190); // 까지의 타원
-
-        //얼굴
-        SelectObject(hdc, hBrush_BNFace);
-        Ellipse(hdc, 200, 100, 550, 450); // 까지의 타원
-
-        //DeleteObject(hBrush_BNFace); 마지막에 삭제해주기
-        
-        ReleaseDC(hwnd, hdc); //이게 뭘까
-
 
     }
 
@@ -99,10 +284,10 @@ int WINAPI WinMain(_In_ HINSTANCE hInstance, _In_opt_ HINSTANCE hPrevInstance, _
     }
 
     // Window viewport 영역 조정
-    RECT rect = { 0, 0, 800, 480 };
-    AdjustWindowRect(&rect, WS_OVERLAPPEDWINDOW, 0);
-    int width = rect.right - rect.left;
-    int height = rect.bottom - rect.top;
+    RECT GetClientRect = { 0, 0, 800, 480 };
+    AdjustWindowRect(&GetClientRect, WS_OVERLAPPEDWINDOW, 0);
+    int width = GetClientRect.right - GetClientRect.left;
+    int height = GetClientRect.bottom - GetClientRect.top;
 
     // 윈도우 생성
     HWND hwnd = CreateWindow(
@@ -122,10 +307,14 @@ int WINAPI WinMain(_In_ HINSTANCE hInstance, _In_opt_ HINSTANCE hPrevInstance, _
         MessageBox(NULL, L"CreateWindow failed!", L"Error", MB_ICONERROR);
         exit(-1);
     }
+
+    //FrameRect로 변경하고 윈도우 기본 background 색 바꿔주기
+    // paint 영역 넣기? 고민좀 해봐야됨
+    // 
     // 박스 2개 버튼 5개 페딩 8px
-    hArea1 = CreateWindow(TEXT("STATIC"), NULL, WS_CHILD | WS_VISIBLE | WS_BORDER | SS_CENTER, 8, 8, 808, 488, hwnd, NULL, hInstance, NULL);
+    hArea1 = CreateWindow(TEXT("STATIC"), NULL, WS_CHILD | WS_VISIBLE | WS_BORDER | SS_CENTER, 0, 0, 800, 480, hwnd, NULL, hInstance, NULL);
     //드로잉 영역
-    hArea2 = CreateWindow(TEXT("STATIC"), NULL, WS_CHILD | WS_VISIBLE | WS_BORDER | SS_CENTER, 16, 90, 788, 400, hwnd, NULL, hInstance, NULL);
+    hArea2 = CreateWindow(TEXT("STATIC"), NULL, WS_CHILD | WS_VISIBLE | WS_BORDER | SS_CENTER, 0, 90, 800, 400, hwnd, NULL, hInstance, NULL);
 
     //버튼 1~5
     hButton1 = CreateWindow(TEXT("BUTTON"), TEXT("Box Mode"), WS_VISIBLE | WS_CHILD, 16, 16, 140, 64, hwnd, (HMENU)1, NULL, NULL);
