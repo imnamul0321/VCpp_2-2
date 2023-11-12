@@ -133,9 +133,9 @@ void DrawBonobono(HWND hwnd, HDC hdc) {
     // 웬지 모르겠는데 자꾸 색 지워짐
     // 안지우면 메모리 누수 가능성있음
     // 마지막에 삭제해주기
-    
+  
 
-    ReleaseDC(hwnd, hdc); // 삭제
+   ReleaseDC(hwnd, hdc); // 삭제
 
 }
 
@@ -159,7 +159,7 @@ LRESULT CALLBACK WindowProc(HWND hwnd, UINT uMsg, WPARAM wParam, LPARAM lParam)
             isCubeButtonPressed = 0; 
 
             SetFocus(hwnd); //포커스 해제
-            InvalidateRect(hwnd, NULL, TRUE); //이전에 그렸던거 삭제
+            //InvalidateRect(hwnd, NULL, TRUE); //이전에 그렸던거 삭제
 
             break;
         case 2: //원버튼
