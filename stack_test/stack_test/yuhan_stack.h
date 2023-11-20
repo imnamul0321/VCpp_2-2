@@ -2,6 +2,8 @@
 #include <iostream>
 using namespace std;
 
+
+//stack
 class Stack {
 private:
 	int stack_size;  // 스택 사이즈
@@ -66,7 +68,7 @@ void Stack::pop()
 	}
 }
 
-
+//출력
 void Stack::show_stack()
 {
 	if (stack_count == 0) cout << "Stack에 저장된 값들이 없습니다" << endl;
@@ -81,3 +83,4 @@ void Stack::show_stack()
 		cout << "총 " << stack_count << "개의 value가 저장되어 있다." << endl;
 	}
 }
+
