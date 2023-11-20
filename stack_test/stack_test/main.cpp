@@ -2,66 +2,62 @@
 #include <iostream>
 using namespace std;
 
-
-int main(void) {
-
-	y_stack y_stack;
-	//초기화
+int main(void)
+{
+	Stack stack;
 	int s_size = 0;
 	int tmp = 0;
-	int button = -1; //초기화값 상없
+	int button = -1; // 아무 숫자로 초기화
 	int value = 0;
+	cout << "Stack 사이즈를 입력하세요 : ";
 
-	cout << "stcak 사이즈 입력 : " << endl;
-
+	// 입력된 stack 사이즈가 양수인지 체크
 	while (s_size <= 0)
 	{
 		scanf_s("%d", &tmp);
-		if (tmp <= 0) {
-
-			cout << "stack은 양수로 입력해야 합니다" << endl;
-			cout << "현재 입력된 값" << s_size << endl;
-			cout << "stcak 사이즈 입력 : " << endl;
+		if (tmp <= 0)
+		{
+			cout << "stack_size를 양수로 입력하세요, 현재 입력된 값 ->" << s_size << endl << endl;
+			cout << "Stack 사이즈를 입력하세요 : ";
 		}
 		else s_size = tmp;
 	}
 
+	// 스택 생성
+	stack.create_stack(s_size);
 
-	//스택생성
-	y_stack.create_stack(s_size);
 
-	cout << "1. push" << endl;
-	cout << "2. pop" << endl;
-	cout << "3. top" << endl;
-	cout << "0. exit" << endl;
+	cout << endl;
+	cout << "1. Stack Push" << endl;
+	cout << "2. Stack Pop" << endl;
+	cout << "3. Stack Print" << endl;
+	cout << "0. Exit program" << endl;
 	cout << endl << endl;
 
-	while (button !=0 )
+	while (button != 0)
 	{
 		cout << "버튼 선택 : ";
 		scanf_s("%d", &button);
 		cout << endl << endl;
-
 		switch (button)
 		{
-		case 1: //입력 값 저장
-			cout << "저장할 값은? : ";
+		case 1: // 입력한 값 저장
+			cout << "저장할 값은 ? : ";
 			scanf_s("%d", &value);
-			y_stack.push(value);
-
-			break;
+			stack.push(value);
+			break; // break 필수 안그러면 아래 항목들도 실행
 
 		case 2:
-			y_stack.pop();
+			stack.pop();
 			break;
-			
+
 		case 3:
-			y_stack.top();
+			stack.show_stack();
 			break;
 
 		}
+
 	}
 	return 0;
 
 }
-

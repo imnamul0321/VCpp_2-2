@@ -1,85 +1,83 @@
 #pragma once
 #include <iostream>
 using namespace std;
-class y_stack {
+
+class Stack {
+private:
+	int stack_size;  // 스택 사이즈
+	int stack_count; // 스택에 저장된 데이터의 개수
+	int* p_stack;    // 스택으로 사용할 메모리 주소를 가리킬 포인터
 
 public:
-	y_stack();
-	~y_stack();
-
+	// 메서드 선언
+	Stack();
+	~Stack();
 	void create_stack(int size);
-	void push(int vlaue);
+	void push(int value);
 	void pop();
-	void top();
-
-
-private:
-	int* data; //스택용 메모리 포인터
-	int stack_size; //스택 사이즈
-	int stack_count; // 저장된 데이터 개수
+	void show_stack();
 };
 
-//생성자
-y_stack::y_stack() {
-	//초기화
+Stack::Stack() // 생성자
+{
+	// 클래스 변수 초기화
 	stack_size = 0;
 	stack_count = 0;
-	data = NULL;
+	p_stack = NULL;
 }
 
-//소멸자
-y_stack::~y_stack() {
-	if (data != NULL) {
-		//data 존재 ===> 삭제
-		delete[] data;
-	}
+Stack::~Stack() // 소멸자
+{
+	if (p_stack != NULL) delete[] p_stack; // p_stack이 존재하면 소멸
 }
 
-void y_stack::create_stack(int size) {
-	if (data != NULL) {
-		//data 존재 ===> 삭제
-		delete[] data;
-		stack_size = size;
-		data = new int[stack_size];
-	}
+// 스택 생성 -> 스택에 사용할 size를 size 변수로 정의
+void Stack::create_stack(int size)
+{
+	if (p_stack != NULL) delete[] p_stack; // 기존에 사용하던 메모리가 있으면 해당 메모리를 제거한다.
+	stack_size = size; // 이 코드를 실행해주는 이유는 class 변수에 값을 넣어주기 위해
+	p_stack = new int[stack_size]; // 새로 메모리를 할당한다.
 }
 
-void y_stack::push(int value) {
-	//빈공간 있으면
-	if (stack_count < stack_size) {
-		//스택 인덱스 값만큼 더해서 value넣기
-		*(data + stack_count) = value;
-		//count 1 증가
-		stack_count++;
-
+// 스택 푸쉬
+void Stack::push(int value)
+{
+	// 스택에 빈 공간이 있을 때 값을 넣는다.
+	if (stack_count < stack_size)
+	{
+		*(p_stack + stack_count) = value; // 스택 메모리 공간에 stack_count index 만큼의 주소값에 값을 넣어 준다.
+		stack_count++; // 저장이 되어 스택 count를 증가시킨다.
 	}
-	else {
-		cout << "stack 가득 참" << endl;
-	}
+	else
+		cout << "Stack이 가득 찼다" << endl;
 }
 
-void y_stack::pop() {
-	//저장된 stack없으면
-	if (stack_count == 0) {
-		cout << "stack에 저장된 값 없음" << endl;
+// pop 구현
+void Stack::pop()
+{
+	if (stack_count == 0) // 저장된 stack이 없으면
+	{
+		cout << "Stack에 저장된 값들이 없다." << endl;
 	}
-	else {
-		cout << "pop됨" << endl;
-		//마지막 값 0으로 만들고 stack_count 감소
-		data[stack_count--] = 0;
-
+	else
+	{
+		cout << "Popped!!" << endl;
+		p_stack[stack_count--] = 0; // 마지막 값을 0으로 만들고 stack_count를 감소시킨다.
 	}
 }
 
-void y_stack::top() {
-	if (stack_count == 0) {
-		cout << "stack에 저장된 값 없음" << endl;
-	}
-	else {
-		cout << "top의 값 " << endl;
-		for (int i = 0; i < stack_count; i++) {
-			cout << " = " << data[i - 1] << endl;
+
+void Stack::show_stack()
+{
+	if (stack_count == 0) cout << "Stack에 저장된 값들이 없습니다" << endl;
+
+	else
+	{
+		cout << "Stack에 저장된 값은 아래와 같습니다." << endl;
+		for (int i = 0; i < stack_count; i++)
+		{
+			cout << i << " : " << p_stack[i] << endl;
 		}
+		cout << "총 " << stack_count << "개의 value가 저장되어 있다." << endl;
 	}
-
 }
