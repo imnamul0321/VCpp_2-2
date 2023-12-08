@@ -1,7 +1,16 @@
 #pragma once
+#include <Windows.h>
+#include <cmath>
+RECT Drawrect(RECT rect, POINT startPoint, POINT endPoint);
 
-void DrawBonobono(HWND hwnd, HDC hdc);
+RECT Move_ract(LPARAM lParam, RECT ractangles, POINT start);
 
-void SpacebarBonobono(HWND hwnd, HDC hdc);
+RECT Resize_circle(LPARAM lParam, RECT Ellipse, POINT start);
 
-void DrawRyan(HWND hwnd, HDC hdc, int left, int top, int right, int bottom);
+void DrawBonobono(HWND hWnd, HDC hdc, int blink);
+
+void DrawRyan(HWND hWnd, HDC hdc, int left, int top, int right, int bottom);
+
+HRGN Drawcube(HWND hWnd, HDC hdc, POINT MINPOINT, POINT MAXPOINT);
+
+

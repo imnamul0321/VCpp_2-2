@@ -1,308 +1,468 @@
 #include <windows.h>
 #include "yuhanCG.h"
+//
+// 메모 2023 / 12 / 8 23:00
+//  
+// 큐브HRGN
+// #include <cmath> 이용
+// 
+// 큐브 그리는거 까진 성공
+// 뷰 영역 설정 creat window로 다시 할려고 싹다 갈아엎음
+// 구글링 참고했음
+//
+// 해야될것
+// 
+// 큐브 이동 및 크기조정
+//  
+// 고쳐야될것
+// 
+// 오래쓰면 팅김
+// 아마도 메모리관리 같은데 어딘질 모르겠음
+// 
+// 
+//뷰 색상 RGB 255 240 200
+HBRUSH hBrush_background = CreateSolidBrush(RGB(255, 240, 200));
+// 흰 배경 브러쉬 RGB 255 255 255
+HBRUSH hBrush_background1 = CreateSolidBrush(RGB(255, 255, 255));
 
-HWND hArea1, hArea2, hButton1, hButton2, hButton3, hButton4, hButton5;
+// True or False
+bool LbuttonPressed = false;
+bool SpaceBarPressed = false;
+bool LbuttonCube = false;
 
-POINT startPoint = { 0 }; 
-POINT endPoint = { 0 }; 
+// 마우스 좌표 초기화
+POINT mouse = { 0 };
 
-POINT mouse = { 0 }; // 마우스 위치, 드로우영역이용
+// 사각형 그리기 작업을 위한 시작점 및 끝점 초기화
+POINT startPoint = { 0 };
+POINT endPoint = { 0 };
 
-int isBoxButtonPressed = 0; // 박스 버튼 눌렸는지 확인
-int isCircleButtonPressed = 0; // 원 버튼 눌렸는지 확인
-int isBonobonoButtonPressed = 0; // 보노보노 버튼 눌렸는지 확인
-int isRyanButtonPressed = 0; // 라이언 버튼 눌렸는지 확인
-int isCubeButtonPressed = 0; // 큐브 버튼 눌렸는지 확인
-int isMouseLButtonPressed = 0;//마우스 왼쪽 눌렸는지
-int spacebarPressed = 0; //스페이스바 눌렸는지
+// 직사각형(RECT) 및 원(RECT) 영역 초기화
+RECT rectnemo = { 0, 0, 0, 0 };
+RECT circle = { 0, 0, 0, 0 };
 
-int draw_ok = 0; //드로우 영역
+// 사각형 및 원을 그릴 기본적인 영역(RECT) 초기화
+RECT box = { 8, 8, 792, 472 };
 
-int left = 0; //라이언용 좌표받기
-int top = 0;
-int right = 0;
-int bottom = 0;
+// 초기화
+POINT noamrlPoint = { 0 };
 
-HBRUSH DrawingBrush = CreateSolidBrush(RGB(255, 255, 255));   //드로잉 영역 브러쉬
+//큐브 초기화
+HRGN cube = NULL;
 
-// 윈도우의 이벤트를 처리하는 콜백(Callback) 함수.
-LRESULT CALLBACK WindowProc(HWND hwnd, UINT uMsg, WPARAM wParam, LPARAM lParam)
-{
-    HDC hdc = GetDC(hwnd);
+int move = 0;
+int num = 0;
 
-    switch (uMsg)
-    {
-    case WM_COMMAND:
-        
-        switch (LOWORD(wParam)) 
-        {
-            
-        case 1: //박스버튼
-            isBoxButtonPressed = 1;
-            isCircleButtonPressed = 0; 
-            isBonobonoButtonPressed = 0;
-            isRyanButtonPressed = 0; 
-            isCubeButtonPressed = 0; 
+// 윈도우 프로시저
+LRESULT CALLBACK WndProc(HWND hwnd, UINT message, WPARAM wParam, LPARAM lParam) {
 
-            SetFocus(hwnd); //포커스 해제
-            InvalidateRect(hArea2, NULL, TRUE); //이전에 그렸던거 삭제
+	switch (message) {
 
-            break;
-        case 2: //원버튼
-            isBoxButtonPressed = 0;
-            isCircleButtonPressed = 1;
-            isBonobonoButtonPressed = 0;
-            isRyanButtonPressed = 0;
-            isCubeButtonPressed = 0;
+	case WM_KEYDOWN:
 
-            SetFocus(hwnd); //포커스 해제
-            InvalidateRect(hArea2, NULL, TRUE); //이전에 그렸던거 삭제
+		if (wParam == VK_SPACE)
+		{
+			if (SpaceBarPressed == false) {
+				SpaceBarPressed = true;
+			}
 
-            break;
-        case 3: //보노보노버튼
-            isBoxButtonPressed = 0;
-            isCircleButtonPressed = 0;
-            isBonobonoButtonPressed = 1;
-            isRyanButtonPressed = 0;
-            isCubeButtonPressed = 0;
+			InvalidateRect(hwnd, NULL, TRUE);
+		}
+		break;
+		 
+	case WM_KEYUP:
 
-            
-            
-            SetFocus(hwnd); //포커스 해제
-            InvalidateRect(hArea2, NULL, TRUE); //이전에 그렸던거 삭제
+		if (wParam == VK_SPACE) {
+			if (SpaceBarPressed == true) {
+				SpaceBarPressed = false;
+			}
+			InvalidateRect(hwnd, NULL, TRUE);
+		}
+		break;
 
-            break;
-        case 4: //라이언버튼
-            isBoxButtonPressed = 0;
-            isCircleButtonPressed = 0;
-            isBonobonoButtonPressed = 0;
-            isRyanButtonPressed = 1;
-            isCubeButtonPressed = 0;
+	case WM_GETMINMAXINFO: {
+		// 클라이언트 영역의 크기
+		RECT rect = { 0, 0, 800, 480 }; 
+		AdjustWindowRect(&rect, WS_OVERLAPPEDWINDOW, FALSE);
 
-            left = startPoint.x;
-            top = startPoint.y;
-            right = endPoint.x;
-            bottom = endPoint.y;
+		// 윈도우창 조절될때 크기 폭 조정
+		// 포인터 이용
+		//
+		MINMAXINFO* minmax = (MINMAXINFO*)lParam;
+		minmax->ptMinTrackSize.x = rect.right - rect.left;
+		minmax->ptMinTrackSize.y = rect.bottom - rect.top;
+		minmax->ptMaxTrackSize.x = rect.right - rect.left;
+		minmax->ptMaxTrackSize.y = rect.bottom - rect.top;
+	}
+						 return 0;
+	case WM_COMMAND:
+		// 안해주면 제대로 안지워짐
+		if (LOWORD(wParam) == 1) {
 
-            
+			rectnemo = { 0, 0, 0, 0 };
+			
+			num = 1;
+			SetFocus(hwnd);  // 버튼 눌러져있는거 포커스 해제
+			InvalidateRect(hwnd, NULL, TRUE); // 그렸던거 지우기
+		}
+		else if (LOWORD(wParam) == 2) {
+			circle = { 0, 0, 0, 0 };
+			
+			num = 2;
+			SetFocus(hwnd);  // 버튼 눌러져있는거 포커스 해제
+			InvalidateRect(hwnd, NULL, TRUE); // 그렸던거 지우기
+		}
+		else if (LOWORD(wParam) == 3) {
+			
+			num = 3;
+			SetFocus(hwnd);  // 버튼 눌러져있는거 포커스 해제
+			InvalidateRect(hwnd, NULL, TRUE); // 그렸던거 지우기
+		}
+		else if (LOWORD(wParam) == 4) {
+			startPoint = { 0 };
+			endPoint = { 0 };
+			num = 4;
+			SetFocus(hwnd);  // 버튼 눌러져있는거 포커스 해제
+			InvalidateRect(hwnd, NULL, TRUE); // 그렸던거 지우기
+		}
+		else if (LOWORD(wParam) == 5) {
+			startPoint = { 0 };
+			endPoint = { 0 };
+			num = 5;
+			SetFocus(hwnd);  // 버튼 눌러져있는거 포커스 해제
+			InvalidateRect(hwnd, NULL, TRUE); // 그렸던거 지우기
+		}
+		break;
 
-            SetFocus(hwnd); //포커스 해제
-            InvalidateRect(hArea2, NULL, TRUE); //이전에 그렸던거 삭제
-            
+	case WM_PAINT: {
 
-            break;
-        case 5: //큐브버튼
-            isBoxButtonPressed = 0;
-            isCircleButtonPressed = 0;
-            isBonobonoButtonPressed = 0;
-            isRyanButtonPressed = 0;
-            isCubeButtonPressed = 1;
+		RECT rect;
+		PAINTSTRUCT ps;
+		HDC hdc = BeginPaint(hwnd, &ps);
 
-            SetFocus(hwnd); //포커스 해제
-            InvalidateRect(hArea2, NULL, TRUE); //이전에 그렸던거 삭제
-            
+		SelectObject(hdc, hBrush_background);
+		Rectangle(hdc, box.left, box.top, box.right, box.bottom);
 
-            break;
-        }
-        break;
-        //마우스 왼클릭 누를때
-    case WM_LBUTTONDOWN: {
+		EndPaint(hwnd, &ps);
+		break;
+	}
+				 break;
 
-        if (isRyanButtonPressed == 1) {
-            startPoint.x = LOWORD(lParam);
-            startPoint.y = HIWORD(lParam);
-        }
-        isMouseLButtonPressed = 1;
-        
-    }
-    break;
-    //마우스 왼클릭 땔 때
-    case WM_LBUTTONUP: {
+	case WM_DESTROY:
 
-        isMouseLButtonPressed = 0;
-        
-    }
-    break;
-    case WM_MOUSEMOVE:
-        if (isBonobonoButtonPressed == 1) {
-            DrawBonobono(hwnd, hdc);
-        }
-        if (isRyanButtonPressed == 1) {
-            endPoint.x = LOWORD(lParam);
-            endPoint.y = HIWORD(lParam);
-            if (isMouseLButtonPressed == 1) {
-                DrawRyan(hwnd, hdc, left, top, right, bottom);
-                InvalidateRect(hArea2, NULL, TRUE); //이전에 그렸던거 삭제}
+		PostQuitMessage(0);
+		break;
 
-            }
-        }
-       
-        
-        mouse.x = LOWORD(lParam);// 마우스 좌표를 얻기
-        mouse.y = HIWORD(lParam);
+	default:
 
-        //그리기 영역 판별
-        //if hArea2 영역(16, 90, 788, 400)에 마우스가 있
-        break;
-    
-    case WM_SETCURSOR:
-    {
-        //드로잉영역이면 마우스cross변경 아니면 기본
-        // 
-        //==================================작동안함=========================================
-        //
-        //
-        if ((mouse.x >= 16 && mouse.x <= 90) && (mouse.y >= 788 && mouse.y <= 400)) {
-            SetCursor(LoadCursor(NULL, IDC_CROSS));
-            draw_ok = 1;
-        }
-        else {
-            SetCursor(LoadCursor(NULL, IDC_ARROW));
-            draw_ok = 0;
-        }
-    }
-    case WM_PAINT:
-    {   
-        //왼클릭 들어오면 라이언 그리기
-        if (isMouseLButtonPressed == 1)  {
-            DrawRyan(hwnd, hdc, startPoint.x, startPoint.y, endPoint.x, endPoint.y);
-        }
-    }
-    break;
-    //보노보노 스페이스바 기능 누를 때
-    case WM_KEYDOWN:
-    {
-        //isBonobonoButtonPressed == 1 그냥 스페이스바 누르면 그려지는 거 방지
-        if (wParam == VK_SPACE && isBonobonoButtonPressed == 1) { //스페이스바를 누르면 눈감게
-            SpacebarBonobono(hwnd, hdc);
-        }
-    }
-    break;
-    //보노보노 스페이스바 기능 땔 때
-    case WM_KEYUP:
-    {
-        if (wParam == VK_SPACE && isBonobonoButtonPressed == 1) { //스페이스바를 땠을 때 눈뜨게
-            DrawBonobono(hwnd, hdc);
-        }
-    }
-    break;
-    case WM_CLOSE:
-        DestroyWindow(hwnd);
-        break;
-    case WM_DESTROY:
-        PostQuitMessage(0);
-        break;
-
-
-    default:
-        return DefWindowProc(hwnd, uMsg, wParam, lParam);
-    }
-
-    ReleaseDC(hwnd, hdc);
-
-    return S_OK;
+		return DefWindowProc(hwnd, message, wParam, lParam);
+	}
+	return 0;
 }
 
+LRESULT CALLBACK drawingViewWndProc(HWND drawingView, UINT message, WPARAM wParam, LPARAM lParam) {
 
-#ifdef UNICODE
-int WINAPI wWinMain(_In_ HINSTANCE hInstance, _In_opt_ HINSTANCE hPrevInstance, _In_ LPWSTR lpCmdLine, _In_ int nShowCmd)
-#else
-int WINAPI wWinMain(_In_ HINSTANCE hInstance, _In_opt_ HINSTANCE hPrevInstance, _In_ LPSTR pCmdLine, _In_ int nCmdShow)
-#endif
-{
+	switch (message) {
+
+	case WM_PAINT: {
+
+		RECT rect;
+		GetClientRect(drawingView, &rect);
+		PAINTSTRUCT ps;
+		HDC hdc = BeginPaint(drawingView, &ps);
+		FillRect(hdc, &rect, hBrush_background1);
+
+		if (num == 1) {
+			Rectangle(hdc, rectnemo.left, rectnemo.top, rectnemo.right, rectnemo.bottom);
+		}
+		if (num == 2) {
+			Ellipse(hdc, circle.left, circle.top, circle.right, circle.bottom);
+		}
+		if (num == 3) {
+			int blink = SpaceBarPressed;
+			DrawBonobono(drawingView, hdc, blink);
+		}
+		if (num == 4) {
+			int left = startPoint.x;
+			int top = startPoint.y;
+			int right = endPoint.x;
+			int bottom = endPoint.y;
+
+			DrawRyan(drawingView, hdc, left, top, right, bottom);
+		}
+		if (num == 5) {
+			cube = Drawcube(drawingView, hdc, startPoint, endPoint);
+		}
+
+		EndPaint(drawingView, &ps);
+		break;
+	}
+				 break;
+
+	case WM_LBUTTONDOWN: {
+
+		if (PtInRegion(cube, LOWORD(lParam), HIWORD(lParam))) {
+			LbuttonCube = true;
+		
+		}
+		else {
+			LbuttonPressed = true;
+		}	
+
+		//1~5 버튼  좌표받기
+		if (num == 1) {
+
+			startPoint.x = LOWORD(lParam);
+			startPoint.y = HIWORD(lParam);
+		}
+		if (num == 2) {
+			startPoint.x = LOWORD(lParam);
+			startPoint.y = HIWORD(lParam);
+		}
+		if ( num == 4) {
+			startPoint.x = LOWORD(lParam);
+			startPoint.y = HIWORD(lParam);
+		}
+		if (num == 5) {
+			if (LbuttonCube == true) {
+				noamrlPoint.x = LOWORD(lParam);
+				noamrlPoint.y = HIWORD(lParam);
+			}
+			else {
+				startPoint.x = LOWORD(lParam);
+				startPoint.y = HIWORD(lParam);
+			}
+		}
+
+	}break;
+		
+	case WM_LBUTTONUP: {
+		LbuttonPressed = false;
+		if (LbuttonCube)
+		{
+			LbuttonCube = false;
+		}
+	}break;
+
+	case WM_RBUTTONDOWN:
+	{
+		//도형 윤곽 판정
+		if (PtInRect(&rectnemo, { LOWORD(lParam), HIWORD(lParam) }))
+		{
+			//사각형 이동
+			move = 1;
+			startPoint.x = LOWORD(lParam);
+			startPoint.y = HIWORD(lParam);
+		}
+
+	}
+	return 0;
+
+	case WM_RBUTTONUP:
+	{
+		if (move > 0)
+		{
+			move = 0;
+		}
+	}
+	return 0;
+
+	case WM_MOUSEMOVE:
+	{
+		PAINTSTRUCT ps;
+		HDC hdc = BeginPaint(drawingView, &ps);
+		POINT currentPoint = { 0 };
+
+		currentPoint.x = LOWORD(lParam);
+		currentPoint.y = HIWORD(lParam);
+
+		// 얼마나 벌어졌는디 계산
+		int distanseX = 0;
+		int distanseY = 0;
+		distanseX = currentPoint.x - noamrlPoint.x;
+		distanseY = currentPoint.y - noamrlPoint.y;
+
+		if (LbuttonPressed) {
+			endPoint.x = LOWORD(lParam);
+			endPoint.y = HIWORD(lParam);
+			if (num == 1)
+			{
+				rectnemo = Drawrect(rectnemo, startPoint, endPoint);
+			}
+			if (num == 2)
+			{
+				circle = Drawrect(circle, startPoint, endPoint);
+			}
+			InvalidateRect(drawingView, NULL, TRUE);
+		}
+
+		if (move == 1)
+		{
+			rectnemo = Move_ract(lParam, rectnemo, startPoint);
+			circle = Resize_circle(lParam, circle, startPoint);
+
+			int mouseX = LOWORD(lParam);
+			int mouseY = HIWORD(lParam);
+
+			startPoint.x = mouseX;
+			startPoint.y = mouseY;
+
+			// WM_PAINT 메시지를 유발하여 도형을 화면에 그립니다.
+			InvalidateRect(drawingView, NULL, TRUE);
+		}
+		else if (move == 2) {
+			// 큐브 이동
+			
+			//InvalidateRect(drawingView, NULL, TRUE);
+		}
+
+		if (LbuttonCube) {
+			
+			cube = Drawcube(drawingView, hdc, startPoint, endPoint);
+			noamrlPoint = currentPoint;
+			InvalidateRect(drawingView, NULL, TRUE);
+		}
+
+	}
+	return 0;
+
+	default:
+		return CallWindowProc(DefWindowProc, drawingView, message, wParam, lParam);
+	}
+	return 0;
+}
+
+// 프로그램 진입점
+int APIENTRY wWinMain(_In_ HINSTANCE hInstance, _In_opt_ HINSTANCE hPrevInstance, _In_ LPWSTR lpCmdLine, _In_ int nCmdShow) {
+	//버튼 선언
+	HWND hButton1, hButton2, hButton3, hButton4, hButton5;
+
+	// 배경 브러시 생성 (RGB 값 255, 240, 200으로 설정)
+	HBRUSH hBrush_background = CreateSolidBrush(RGB(255, 240, 200));
+
+	// 윈도우 클래스 구조체 초기화
+	WNDCLASSEX wcex;
+	wcex.cbSize = sizeof(WNDCLASSEX);        // 윈도우 클래스 구조체의 크기
+	wcex.lpszMenuName = NULL;                // 메뉴 이름
+	wcex.lpszClassName = L"ButtonWindowClass";           // 클래스 이름
+	wcex.style = CS_HREDRAW | CS_VREDRAW;     // 윈도우 스타일
+	wcex.lpfnWndProc = WndProc;               // 윈도우 프로시저 함수
+	wcex.cbClsExtra = 0;                      // 클래스의 여분 메모리
+	wcex.cbWndExtra = 0;                      // 윈도우의 여분 메모리
+	wcex.hInstance = hInstance;               // 인스턴스 핸들
+	wcex.hIcon = LoadIcon(hInstance, IDI_APPLICATION);    // 아이콘 핸들
+	wcex.hCursor = LoadCursor(NULL, IDC_ARROW);          // 커서 핸들
+	wcex.hbrBackground = (HBRUSH)(hBrush_background);    // 배경 브러시 핸들
+	wcex.hIconSm = LoadIcon(wcex.hInstance, IDI_APPLICATION);   // 작은 아이콘 핸들
 
 
-    /* 윈도우 클래스 선언.*/
-    WNDCLASS wc;
-    ZeroMemory(&wc, sizeof(wc));   // 모두 0으로 초기화.
+	if (!RegisterClassEx(&wcex)) {
+		return FALSE;
+	}
 
-    // 윈도우 클래스 값 설정
-    wc.hInstance = hInstance;
-    wc.lpszClassName = TEXT("Computer Software");
-    wc.hIcon = LoadIcon(NULL, IDI_APPLICATION);
-    wc.hCursor = LoadCursor(NULL, IDC_ARROW);
-    wc.style = CS_HREDRAW | CS_VREDRAW;
-    wc.hbrBackground = (HBRUSH)(COLOR_WINDOW + 1);
-    wc.lpfnWndProc = WindowProc;
+	//뷰 영역 조정
+	RECT rect = { 0, 0, 800, 480 };
+	AdjustWindowRect(&rect, WS_OVERLAPPEDWINDOW, 0);
+	int width = rect.right - rect.left;
+	int height = rect.bottom - rect.top;
 
-    // 윈도우 클래스 등록.
-    if (RegisterClass(&wc) == 0)
-    {
-        MessageBox(NULL, L"RegisterClass failed!", L"Error", MB_ICONERROR);
-        exit(-1);   //예외
-    }
-
-    // Window viewport 영역 조정
-    RECT GetClientRect = { 0, 0, 800, 480 };
-    AdjustWindowRect(&GetClientRect, WS_OVERLAPPEDWINDOW, 0);
-    int width = GetClientRect.right - GetClientRect.left;
-    int height = GetClientRect.bottom - GetClientRect.top;
-
-    // 윈도우 생성
-    HWND hwnd = CreateWindow(
-        wc.lpszClassName,
-        TEXT("202207010 임성진"),
-        WS_OVERLAPPEDWINDOW,
-        0, 0,
-        width, height,
-        NULL, NULL,
-        hInstance,
-        NULL
-    );
-
-    // 오류 검사
-    if (hwnd == NULL)
-    {
-        MessageBox(NULL, L"CreateWindow failed!", L"Error", MB_ICONERROR);
-        exit(-1);
-    }
-
-    //FrameRect로 변경하고 윈도우 기본 background 색 바꿔주기
-    // paint 영역 넣기? 고민좀 해봐야됨
-    // 
-    // 박스 2개 버튼 5개 페딩 8px
-    hArea1 = CreateWindow(TEXT("STATIC"), NULL, WS_CHILD | WS_VISIBLE | WS_BORDER | SS_CENTER, 0, 0, 800, 480, hwnd, NULL, hInstance, NULL);
-    //드로잉 영역
-    hArea2 = CreateWindow(TEXT("STATIC"), NULL, WS_CHILD | WS_VISIBLE | WS_BORDER | SS_CENTER, 0, 90, 800, 400, hwnd, NULL, hInstance, NULL);
-
-    //버튼 1~5
-    hButton1 = CreateWindow(TEXT("BUTTON"), TEXT("Box Mode"), WS_VISIBLE | WS_CHILD, 16, 16, 140, 64, hwnd, (HMENU)1, NULL, NULL);
-    hButton2 = CreateWindow(TEXT("BUTTON"), TEXT("Circle Mode"), WS_VISIBLE | WS_CHILD, 164, 16, 140, 64, hwnd, (HMENU)2, NULL, NULL);
-    hButton3 = CreateWindow(TEXT("BUTTON"), TEXT("Bonobono Mode"), WS_VISIBLE | WS_CHILD, 312, 16, 140, 64, hwnd, (HMENU)3, NULL, NULL);
-    hButton4 = CreateWindow(TEXT("BUTTON"), TEXT("Ryan Mode"), WS_VISIBLE | WS_CHILD, 460, 16, 140, 64, hwnd, (HMENU)4, NULL, NULL);
-    hButton5 = CreateWindow(TEXT("BUTTON"), TEXT("Cube Mode"), WS_VISIBLE | WS_CHILD, 608, 16, 140, 64, hwnd, (HMENU)5, NULL, NULL);
-    // 창 보이기.
-    ShowWindow(hwnd, SW_SHOW); // 창 띄우고
-    UpdateWindow(hwnd); // 업데이트해야 보임. 한 쌍으로 쓴다고 보면 됨.
+	// 윈도우 생성 함수 호출
+	HWND hwnd = CreateWindow(
+		wcex.lpszClassName,             // 사용할 윈도우 클래스 이름
+		TEXT("202207010 임성진"),        // 윈도우 타이틀 텍스트
+		WS_OVERLAPPEDWINDOW,            // 윈도우 스타일 (오버랩 윈도우, 최소/최대 버튼, 타이틀 바 포함)
+		0, 0,                            // 윈도우의 x, y 좌표 (화면 좌상단 기준)
+		width, height,                   // 윈도우의 너비와 높이
+		NULL,                            // 부모 윈도우 핸들 (없음)
+		NULL,                            // 메뉴 핸들 (없음)
+		hInstance,                       // 인스턴스 핸들
+		NULL                             // 윈도우를 생성할 때 사용할 데이터 (없음)
+	);
 
 
+	// 드로잉뷰를 위한 윈도우 클래스 구조체 초기화
+	WNDCLASSEX wcDrawing;
+	wcDrawing.cbSize = sizeof(WNDCLASSEX);        // 윈도우 클래스 구조체의 크기
+	wcDrawing.style = CS_HREDRAW | CS_VREDRAW;     // 윈도우 스타일 (가로 및 세로 변경시 다시 그리기)
+	wcDrawing.lpfnWndProc = drawingViewWndProc;   // 윈도우 프로시저 함수 설정 (드로잉뷰의 메시지 처리 함수)
+	wcDrawing.hIcon = NULL;                        // 아이콘 핸들 (없음)
+	wcDrawing.hCursor = LoadCursor(NULL, IDC_CROSS);  // 마우스 커서를 십자가로 설정
+	wcDrawing.hbrBackground = (HBRUSH)(GetStockObject(WHITE_BRUSH));  // 배경 브러시 (흰색)
+	wcDrawing.lpszMenuName = NULL;                 // 메뉴 이름 (없음)
+	wcDrawing.lpszClassName = L"DrawingViewClass";  // 윈도우 클래스 이름
+	wcDrawing.hIconSm = NULL;                       // 작은 아이콘 핸들 (없음)
+	wcDrawing.cbClsExtra = 0;                       // 클래스의 여분 메모리
+	wcDrawing.cbWndExtra = 0;                       // 윈도우의 여분 메모리
+	wcDrawing.hInstance = hInstance;                // 인스턴스 핸들
 
-    // 메시지 처리 루프.
-    MSG msg;
-    ZeroMemory(&msg, sizeof(msg));
 
-    // 메시지 처리.
-    while (msg.message != WM_QUIT)
-    {
-        if (GetMessage(&msg, NULL, 0, 0))
-        {
-            // 메시지 해석해줘.
-            TranslateMessage(&msg);
-            // 메시지를 처리해야할 곳에 전달해줘.
-            DispatchMessage(&msg);
-        }
-        //if(PeekMessage(&msg, NULL, 0, 0, PM_REMOVE))
-        //{
-        //   // 메시지 해석해줘.
-        //   TranslateMessage(&msg);
-        //   // 메시지를 처리해야할 곳에 전달해줘.
-        //   DispatchMessage(&msg);
-        //} // PM_REMOVE의 자리는 이 메세지를 쓰고 어떡할거냐.의 의미인데 지운다는 것임.
-        //else{}
-    }
+	RegisterClassEx(&wcDrawing);
 
-    UnregisterClass(wc.lpszClassName, wc.hInstance);
 
-    //종료 메시지 보내기
-    return (int)msg.wParam;
+	// 드로잉뷰 윈도우 생성 함수 호출
+	HWND drawingView = CreateWindow(
+		L"DrawingViewClass",   // 드로잉뷰 윈도우 클래스 이름
+		L"",                   // 윈도우 타이틀 없음
+		WS_CHILD | WS_VISIBLE, // 윈도우 스타일 (자식 윈도우 및 가시성 설정)
+		16, 88,                 // 윈도우의 x, y 좌표 (부모 윈도우 내에서의 상대 위치)
+		768, 376,               // 윈도우의 너비와 높이
+		hwnd,                  // 부모 윈도우 핸들
+		NULL,                  // 메뉴 핸들 (없음)
+		hInstance,             // 인스턴스 핸들
+		NULL                   // 윈도우를 생성할 때 사용할 데이터 (없음)
+	);
+
+	// drawingView 윈도우에 사용자 정의 데이터 연결 (예: 부모 윈도우의 핸들)
+	SetWindowLongPtr(drawingView, GWLP_USERDATA, (LONG_PTR)hwnd);
+
+	// drawingView 윈도우의 윈도우 프로시저를 drawingViewWndProc로 변경
+	SetWindowLongPtr(drawingView, GWLP_WNDPROC, (LONG_PTR)drawingViewWndProc);
+
+
+	if (!drawingView) {
+		return -1;
+	}
+
+	if (!hwnd) {
+		return FALSE;
+	}
+
+	// 드로우 영역 전면 갈아 엎음
+	// 새로 만들기 예정 
+	
+
+	//버튼 1 ~ 5
+	hButton1 = CreateWindow(
+		L"BUTTON", L"Box", WS_CHILD | WS_VISIBLE | BS_PUSHBUTTON,
+		16, 16, 140, 64, hwnd, (HMENU)1, hInstance, NULL);
+
+	hButton2 = CreateWindow(
+		L"BUTTON", L"Circle", WS_CHILD | WS_VISIBLE | BS_PUSHBUTTON,
+		172, 16, 140, 64, hwnd, (HMENU)2, hInstance, NULL);
+
+	hButton3 = CreateWindow(
+		L"BUTTON", L"Bonobono", WS_CHILD | WS_VISIBLE | BS_PUSHBUTTON,
+		328, 16, 140, 64, hwnd, (HMENU)3, hInstance, NULL);
+
+	hButton4 = CreateWindow(
+		L"BUTTON", L"Ryan", WS_CHILD | WS_VISIBLE | BS_PUSHBUTTON,
+		484, 16, 140, 64, hwnd, (HMENU)4, hInstance, NULL);
+
+	hButton5 = CreateWindow(
+		L"BUTTON", L"Cube", WS_CHILD | WS_VISIBLE | BS_PUSHBUTTON,
+		640, 16, 140, 64, hwnd, (HMENU)5, hInstance, NULL);
+
+	//없으면 안나옴
+	ShowWindow(hwnd, nCmdShow); 
+	UpdateWindow(hwnd);
+
+
+	//메시지 루프
+	MSG msg;
+	while (GetMessage(&msg, NULL, 0, 0)) {
+		TranslateMessage(&msg);
+		DispatchMessage(&msg);
+	}
+
+	return (int)msg.wParam;
 }
